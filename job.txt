@@ -1,0 +1,66 @@
+LLMOps Engineer
+Brooklyn Sports & Entertainment creates bold, authentic, and unforgettable experiences that redefine sports, entertainment, and hospitality, The Brooklyn Way. As the parent company of marquee properties including the Brooklyn Nets, NY Liberty and Barclays Center, Brooklyn Sports & Entertainment operates at the intersection of live entertainment, premium hospitality, and community engagement.
+
+As it expands its existing portfolio, Brooklyn Sports & Entertainment now includes a media portfolio including Type.Set.Brooklyn and BK Mag, as well as Brooklyn Wine Club, and a hospitality business developing several location-based entertainment properties.
+
+Whether on the court, on stage, or in the workplace, Brooklyn Sports & Entertainment is driven by a pursuit of excellence—constantly evolving, innovating, and pushing boundaries to elevate its business and expand its fan base. The company is deeply committed to fostering a culture of belonging and inclusion, both internally and across its communities, ensuring that every interaction reflects its values of growth mindset, integrity, accountability and care.
+
+We are guided by our core values:
+
+Integrity: Be intellectually honest at all times. Demonstrate the highest professional and ethical standards.
+Care: Care for everything and everyone around us. Practice empathy, respect, and inclusion to promote an environment of excellence and success.
+Growth Mindset: Develop ourselves and those around us. Experiment, learn, and improve from everything we do.
+Accountability: Deliver on our word, take responsibility for our actions, and work in the interest of our team.
+
+SUMMARY
+
+The Large Language Model Ops (LLMOps) Engineer ensures Brooklyn Sports & Entertainment's AI systems are safe to run in production and safe to evolve over time. This role builds and operates the infrastructure that powers the company's AI platform, including deployment pipelines, evaluation systems, observability tooling, and infrastructure for agent-based workflows.
+
+Working primarily within AWS and Amazon Bedrock, the LLMOps Engineer builds the production environment required to reliably operate AI systems that support ticketing operations, venue analytics, digital fan engagement, partnerships workflows, and internal engineering tools.
+
+The role works closely with the AI Engineer, sharing responsibility for production operations while focusing on infrastructure reliability and AI platform governance.
+
+This role reports into the VP, Artificial Intelligence.
+
+WHAT YOU WILL DO
+
+AI Infrastructure and Platform Reliability
+- Design and operate the AWS-based infrastructure foundation for AI and agent systems.
+- Manage integrations with Amazon Bedrock and other model providers.
+- Implement secure environment configuration, secrets management, and infrastructure policies.
+- Build scalable systems capable of supporting ongoing operations.
+
+AI Development Pipeline
+- Build and maintain CI/CD pipelines for AI systems, including deployment of prompts, models, and agent workflows.
+- Implement versioning for models, prompts, and LangGraph agent graphs.
+- Design environment promotion standards and automated rollback mechanisms.
+
+CodeAI Development Pipeline
+- Design and operate the CodeAI development pipeline, enabling AI agents to assist with software development tasks.
+- Build sandboxed environments allowing AI agents to safely interact with repositories, CI systems, and development workflows.
+- Establish governance and security guardrails for AI-assisted development and vibe coding practices.
+
+Observability and Evaluation
+- Implement monitoring systems using AWS CloudWatch and evaluation dashboards.
+- Define Service Level Objectives (SLOs) for AI system reliability.
+- Build shared evaluation infrastructure that measures hallucination rates, tool-call success, and workflow reliability.
+- Monitor and optimize cost-per-request metrics.
+
+Shared Production Ownership
+- Participate in deployment, monitoring, and incident response for AI systems.
+- Develop operational playbooks that reduce mean time to recovery and improve system resilience.
+
+WHAT YOU WILL BRING
+- 3-6 years of experience working in DevOps, MLOps, or infrastructure engineering roles.
+- Strong experience operating AWS cloud infrastructure.
+- Experience deploying and operating AI or machine learning systems in production environments.
+- Experience with Amazon Bedrock or similar LLM platforms.
+- Experience building CI/CD pipelines and automated deployment systems.
+- Experience implementing observability systems and operational dashboards.
+
+WHO YOU ARE
+- You enjoy building systems that make complex technology safe and reliable to operate.
+- You are motivated by operational excellence and reliability engineering.
+- You demonstrate a strong growth mindset and actively learn new technologies as the AI ecosystem evolves.
+- You enjoy experimenting with new technologies while maintaining production-quality standards.
+- You collaborate closely with engineers building AI applications to ensure systems scale safely.

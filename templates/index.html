@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Recruiting Hub — Brooklyn Sports &amp; Entertainment</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0a0a0a;
+      --card-bg:   #141414;
+      --border:    #272727;
+      --copper:    #C9892A;
+      --copper-lt: #E0A83C;
+      --copper-dk: #9A6B1A;
+      --white:     #FFFFFF;
+      --grey-1:    #AAAAAA;
+      --grey-2:    #555555;
+      --grey-3:    #333333;
+      --green:     #22C55E;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--white);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 32px 72px;
+    }
+
+    /* ── Header ──────────────────────────────────────────────── */
+    .header {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .logo {
+      height: 44px;
+      display: block;
+      margin: 0 auto 18px;
+    }
+    .header h1 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .header p {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--grey-1);
+    }
+    .copper-rule {
+      width: 40px; height: 2px;
+      background: var(--copper);
+      margin: 12px auto 0;
+      border-radius: 2px;
+    }
+
+    /* ── App nav tabs ────────────────────────────────────────── */
+    .app-nav {
+      display: flex;
+      gap: 4px;
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .nav-tab {
+      padding: 8px 20px;
+      border-radius: 7px;
+      border: none;
+      background: transparent;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--grey-1);
+      letter-spacing: 0.03em;
+      transition: background 0.15s, color 0.15s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+    }
+    .nav-tab.active {
+      background: var(--copper);
+      color: #000;
+    }
+    .nav-tab:not(.active):hover { color: var(--white); }
+
+    .unread-badge {
+      background: var(--white);
+      color: #000;
+      font-size: 0.68rem;
+      font-weight: 800;
+      border-radius: 99px;
+      padding: 1px 6px;
+      min-width: 18px;
+      text-align: center;
+      display: none;
+    }
+    .nav-tab.active .unread-badge {
+      background: rgba(0,0,0,0.25);
+      color: #000;
+    }
+
+    /* ── Sections ────────────────────────────────────────────── */
+    .section { display: none; width: 100%; }
+    .section.active { display: block; }
+
+    /* ── Card (shared) ───────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 44px;
+    }
+
+    /* ── Two-column form layout ─────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 48px;
+      align-items: start;
+    }
+    .form-col-right { display: flex; flex-direction: column; }
+
+    /* ── Two-column progress layout ─────────────────────────── */
+    .progress-grid {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 40px;
+      align-items: start;
+    }
+    .progress-sidebar { display: flex; flex-direction: column; gap: 16px; }
+    .progress-sidebar .progress-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+
+    @media (max-width: 900px) {
+      .form-grid       { grid-template-columns: 1fr; gap: 0; }
+      .progress-grid   { grid-template-columns: 1fr; }
+    }
+
+    /* ── Section label ───────────────────────────────────────── */
+    .section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--copper);
+      margin-bottom: 14px;
+    }
+
+    /* ── Upload groups ───────────────────────────────────────── */
+    .upload-group { margin-bottom: 22px; }
+    .upload-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--white);
+      margin-bottom: 4px;
+    }
+    .upload-hint {
+      font-size: 0.76rem;
+      color: var(--grey-1);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .drop-zone {
+      border: 1.5px dashed var(--grey-2);
+      border-radius: 8px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      background: #0f0f0f;
+    }
+    .drop-zone:hover, .drop-zone.over { border-color: var(--copper); background: #1a1408; }
+    .drop-zone.has-file { border-color: var(--green); border-style: solid; background: #0a1a0d; }
+    .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .drop-icon { font-size: 1.4rem; margin-bottom: 5px; }
+    .drop-text { font-size: 0.82rem; color: var(--grey-1); }
+    .drop-name { font-size: 0.8rem; font-weight: 600; color: var(--green); margin-top: 4px; }
+
+    /* ── JD tabs ─────────────────────────────────────────────── */
+    .tab-bar {
+      display: flex; gap: 2px;
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      border-radius: 6px; padding: 3px;
+      margin-bottom: 10px; width: fit-content;
+    }
+    .tab-btn {
+      padding: 5px 14px; border-radius: 4px; border: none;
+      background: transparent; font-size: 0.8rem; font-weight: 500;
+      cursor: pointer; color: var(--grey-1);
+      transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn.active { background: var(--copper); color: #000; font-weight: 700; }
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    textarea {
+      width: 100%; padding: 12px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.84rem; resize: vertical; font-family: inherit;
+      color: var(--white); background: #0f0f0f;
+    }
+    textarea:focus { outline: none; border-color: var(--copper); }
+    textarea::placeholder { color: var(--grey-2); }
+
+    /* ── API key ─────────────────────────────────────────────── */
+    .api-row { margin-bottom: 28px; }
+    .api-key-input {
+      width: 100%; padding: 10px 14px;
+      border: 1.5px solid var(--border); border-radius: 8px;
+      font-size: 0.85rem; font-family: "SF Mono","Fira Code",monospace;
+      color: var(--white); background: #0f0f0f;
+    }
+    .api-key-input:focus { outline: none; border-color: var(--copper); }
+    .api-key-input::placeholder { color: var(--grey-2); }
+    .api-key-set {
+      font-size: 0.82rem; color: var(--green);
+      padding: 8px 12px; background: #0a1a0d;
+      border-radius: 6px; border: 1px solid #1a4a22;
+    }
+    hr.divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    /* ── Tier legend ─────────────────────────────────────────── */
+    .tier-legend { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tier-badge { display: flex; align-items: center; gap: 6px; font-size: 0.76rem; color: var(--grey-1); }
+    .tier-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .tier-dot.t1 { background: #22C55E; }
+    .tier-dot.t2 { background: #F59E0B; }
+    .tier-dot.t3 { background: #EF4444; }
+
+    /* ── Run button ──────────────────────────────────────────── */
+    .run-btn {
+      width: 100%; padding: 14px; background: var(--copper); color: #000;
+      border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; letter-spacing: 0.06em; text-transform: uppercase;
+      transition: background 0.2s, opacity 0.2s;
+    }
+    .run-btn:hover { background: var(--copper-lt); }
+    .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Error banner ────────────────────────────────────────── */
+    .error-banner {
+      display: none; background: #1f0808; border: 1px solid #6b1a1a;
+      color: #FCA5A5; border-radius: 8px; padding: 12px 16px;
+      font-size: 0.85rem; margin-bottom: 18px;
+    }
+
+    /* ── Progress ────────────────────────────────────────────── */
+    #progress-panel { display: none; margin-top: 28px; }
+    .progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .progress-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--copper); }
+    .progress-counter { font-size: 0.78rem; color: var(--grey-1); }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid var(--border); border-top-color: var(--copper);
+      border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Candidate feed ─────────────────────────────────────── */
+    .candidate-feed {
+      display: flex; flex-direction: column; gap: 8px;
+      max-height: 600px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: var(--grey-3) transparent;
+    }
+    .candidate-feed::-webkit-scrollbar { width: 4px; }
+    .candidate-feed::-webkit-scrollbar-thumb { background: var(--grey-3); border-radius: 4px; }
+
+    @keyframes cardIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .cand-card {
+      display: flex; align-items: center; gap: 16px;
+      background: #0f0f0f; border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 20px;
+      animation: cardIn 0.22s ease;
+      border-left: 3px solid transparent;
+    }
+    .cand-card.opt-card  { border-left-color: #EF4444; background: #130a0a; }
+    .cand-card.no-resume-card { opacity: 0.42; }
+    .cand-card.error-card { border-left-color: var(--grey-3); opacity: 0.5; }
+
+    .cand-rank {
+      font-size: 0.72rem; color: var(--grey-2); font-weight: 700;
+      width: 28px; text-align: center; flex-shrink: 0; letter-spacing: 0.02em;
+    }
+    .cand-rank.final { color: var(--copper); font-size: 0.8rem; }
+    .cand-info { flex: 1; min-width: 0; }
+    .cand-name {
+      font-size: 0.97rem; font-weight: 600; color: var(--white);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .opt-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 0.62rem; font-weight: 800; letter-spacing: 0.08em;
+      background: #3b0000; color: #F87171; border: 1px solid #6b1a1a;
+      border-radius: 4px; padding: 2px 7px; margin-left: 8px;
+      vertical-align: middle; white-space: nowrap;
+    }
+    .cand-signals { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .stab-badge {
+      font-size: 0.74rem; font-weight: 800; border-radius: 6px;
+      padding: 3px 11px; letter-spacing: 0.04em;
+    }
+    .stab-a { background: #052e16; color: #4ADE80; border: 1px solid #166534; }
+    .stab-b { background: #1c1400; color: #FCD34D; border: 1px solid #78350f; }
+    .stab-c { background: #1f0808; color: #F87171; border: 1px solid #7f1d1d; }
+
+    .ny-badge {
+      font-size: 0.72rem; font-weight: 700; border-radius: 5px;
+      padding: 3px 9px; letter-spacing: 0.03em;
+    }
+    .ny-yes { background: #052e16; color: #4ADE80; border: 1px solid #166534; }
+    .ny-no  { background: var(--grey-3); color: var(--grey-2); border: 1px solid #3a3a3a; }
+
+    .fit-score { font-size: 0.88rem; font-weight: 700; min-width: 34px; text-align: right; }
+    .fit-high { color: #4ADE80; }
+    .fit-mid  { color: #FCD34D; }
+    .fit-low  { color: #F87171; }
+    .fit-none { color: var(--grey-2); font-style: italic; font-weight: 400; font-size: 0.8rem; }
+
+    .feed-status {
+      font-size: 0.75rem; color: var(--grey-2); padding: 2px 0;
+      font-style: italic; animation: cardIn 0.2s ease;
+    }
+
+    /* ── Summary bar ────────────────────────────────────────── */
+    #summary-bar {
+      display: none;
+      background: #071a0e; border: 1px solid #1a4a22;
+      border-radius: 8px; padding: 14px 18px; margin-bottom: 14px;
+    }
+    .summary-top { font-size: 0.82rem; font-weight: 700; color: #4ADE80; margin-bottom: 4px; }
+    .summary-detail { font-size: 0.78rem; color: var(--grey-1); }
+    .summary-opt { color: #F87171; font-weight: 700; }
+
+    /* ── Download ───────────────────────────────────────────── */
+    #download-btn {
+      display: none; width: 100%; margin-top: 0; padding: 13px;
+      background: var(--copper); color: #000; border: none; border-radius: 8px;
+      font-size: 0.9rem; font-weight: 700; cursor: pointer; text-align: center;
+      text-decoration: none; letter-spacing: 0.04em; text-transform: uppercase;
+      transition: background 0.2s;
+    }
+    #download-btn:hover { background: var(--copper-lt); }
+    #download-confirm {
+      display: none; text-align: center; font-size: 0.78rem;
+      color: #4ADE80; margin-top: 8px; animation: cardIn 0.3s ease;
+    }
+    #new-run { display: none; text-align: center; margin-top: 12px; }
+    #new-run a { font-size: 0.82rem; color: var(--copper); text-decoration: underline; cursor: pointer; }
+
+    /* ══════════════════════════════════════════════════════════
+       DASHBOARD
+    ══════════════════════════════════════════════════════════ */
+
+    .dash-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .dash-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--white);
+    }
+    .dash-subtitle {
+      font-size: 0.78rem;
+      color: var(--grey-1);
+      margin-top: 2px;
+    }
+    .mark-all-btn {
+      padding: 7px 16px;
+      background: transparent;
+      border: 1px solid var(--copper);
+      color: var(--copper);
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+    .mark-all-btn:hover { background: var(--copper); color: #000; }
+
+    /* Date group heading */
+    .date-group { margin-bottom: 28px; }
+    .date-heading {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--grey-2);
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Notification card */
+    .notif-card {
+      display: flex;
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      overflow: hidden;
+      transition: opacity 0.3s;
+    }
+    .notif-card[data-read="true"] { opacity: 0.38; }
+    .notif-card[data-read="true"] .notif-stripe { background: var(--grey-3); }
+    .notif-card[data-read="true"] .mark-read-btn { display: none; }
+
+    .notif-stripe {
+      width: 3px;
+      flex-shrink: 0;
+      background: var(--copper);
+    }
+
+    .notif-body {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      flex: 1;
+      min-width: 0;
+      flex-wrap: wrap;
+    }
+
+    .notif-icon {
+      font-size: 1.3rem;
+      flex-shrink: 0;
+      width: 32px;
+      text-align: center;
+    }
+
+    .notif-main { flex: 1; min-width: 0; }
+
+    .notif-type-chip {
+      display: inline-block;
+      font-size: 0.62rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--copper);
+      margin-bottom: 4px;
+    }
+    .notif-card[data-read="true"] .notif-type-chip { color: var(--grey-2); }
+
+    .notif-candidate {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--white);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .notif-detail {
+      font-size: 0.8rem;
+      color: var(--grey-1);
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .notif-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    .notif-time {
+      font-size: 0.73rem;
+      color: var(--grey-2);
+      white-space: nowrap;
+    }
+    .mark-read-btn {
+      padding: 4px 12px;
+      background: transparent;
+      border: 1px solid var(--grey-3);
+      color: var(--grey-1);
+      border-radius: 5px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .mark-read-btn:hover { border-color: var(--copper); color: var(--copper); }
+
+    .dash-empty {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--grey-2);
+      font-size: 0.88rem;
+    }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .footer {
+      margin-top: 36px;
+      font-size: 0.72rem;
+      color: var(--grey-2);
+      text-align: center;
+    }
+
+    /* ── Clickable candidate name ────────────────────────────── */
+    .cand-name-link {
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+    .cand-name-link:hover { color: var(--copper-lt); text-decoration: underline; }
+
+    /* ── Resume side panel ───────────────────────────────────── */
+    .resume-backdrop {
+      position: fixed; inset: 0;
+      background: rgba(0, 0, 0, 0.65);
+      z-index: 900;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .resume-backdrop.open { opacity: 1; pointer-events: auto; }
+
+    .resume-panel {
+      position: fixed;
+      top: 0; right: 0;
+      width: min(680px, 100vw);
+      height: 100vh;
+      background: var(--card-bg);
+      border-left: 2px solid var(--copper-dk);
+      z-index: 901;
+      display: flex; flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -12px 0 40px rgba(0, 0, 0, 0.6);
+    }
+    .resume-panel.open { transform: translateX(0); }
+
+    .panel-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: #111111;
+      flex-shrink: 0;
+    }
+    .panel-header-left { flex: 1; min-width: 0; }
+    .panel-label {
+      font-size: 0.6rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--copper); margin-bottom: 3px;
+    }
+    .panel-candidate-name {
+      font-size: 1rem; font-weight: 700; color: var(--white);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .panel-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
+    .panel-preview-btn, .panel-download-btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 7px 14px; border-radius: 6px;
+      font-size: 0.78rem; font-weight: 700; cursor: pointer;
+      letter-spacing: 0.04em; text-decoration: none;
+      transition: background 0.15s, color 0.15s;
+      border: none;
+    }
+    .panel-preview-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--grey-1);
+    }
+    .panel-preview-btn:hover { border-color: var(--copper); color: var(--copper); }
+    .panel-preview-btn.active {
+      border-color: var(--copper-dk);
+      background: rgba(201,137,42,0.12);
+      color: var(--copper);
+    }
+    .panel-download-btn {
+      background: var(--copper); color: #000;
+    }
+    .panel-download-btn:hover { background: var(--copper-lt); }
+
+    .panel-close-btn {
+      width: 32px; height: 32px; border-radius: 6px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--grey-1); font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; transition: border-color 0.15s, color 0.15s;
+    }
+    .panel-close-btn:hover { border-color: var(--copper); color: var(--copper); }
+
+    .panel-body { flex: 1; overflow: hidden; position: relative; background: #f0f0f0; }
+    .panel-body iframe {
+      width: 100%; height: 100%; border: none; display: block;
+      transition: opacity 0.2s;
+    }
+    .panel-loading {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      flex-direction: column; gap: 12px;
+      color: var(--grey-1); font-size: 0.85rem;
+      background: #1a1a1a;
+    }
+    .panel-loading .spinner { width: 20px; height: 20px; border-width: 2px; }
+    .panel-error {
+      position: absolute; inset: 0;
+      display: none; align-items: center; justify-content: center;
+      flex-direction: column; gap: 10px; background: #1a1a1a;
+      color: var(--grey-1); font-size: 0.85rem; text-align: center; padding: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────── -->
+<div class="header">
+  <img src="https://bkse.com/images/bkse-wht.svg"
+       alt="Brooklyn Sports &amp; Entertainment"
+       class="logo"
+       onerror="this.style.display='none'" />
+  <h1>Recruiting Hub</h1>
+  <p>Brooklyn Sports &amp; Entertainment · Powered by Claude</p>
+  <div class="copper-rule"></div>
+</div>
+
+<!-- ── Nav tabs ────────────────────────────────────────────── -->
+<div class="app-nav">
+  <button class="nav-tab active" data-target="ranker">Resume Ranker</button>
+  <button class="nav-tab" data-target="dashboard">
+    Activity Dashboard
+    <span class="unread-badge" id="unread-badge"></span>
+  </button>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION: Resume Ranker
+══════════════════════════════════════════════════════════ -->
+<div class="section active" id="section-ranker">
+<div class="card">
+
+  <div id="error-banner" class="error-banner"></div>
+
+  <form id="ranker-form" novalidate>
+    <div class="form-grid">
+
+      <!-- Left column: file uploads -->
+      <div class="form-col-left">
+        <div class="section-label">Input Files</div>
+
+        <div class="upload-group">
+          <label class="upload-label">ATS / Greenhouse CSV Export</label>
+          <span class="upload-hint">Candidate list exported from your ATS (.csv)</span>
+          <div class="drop-zone" id="dz-csv">
+            <input type="file" name="csv" id="file-csv" accept=".csv" />
+            <div class="drop-icon">📋</div>
+            <div class="drop-text">Click or drag &amp; drop your CSV</div>
+            <div class="drop-name" id="name-csv"></div>
+          </div>
+        </div>
+
+        <div class="upload-group">
+          <label class="upload-label">Resume Files (ZIP)</label>
+          <span class="upload-hint">Zip your folder of PDF / DOCX resumes and upload here</span>
+          <div class="drop-zone" id="dz-resumes">
+            <input type="file" name="resumes" id="file-resumes" accept=".zip" />
+            <div class="drop-icon">📁</div>
+            <div class="drop-text">Click or drag &amp; drop a .zip file</div>
+            <div class="drop-name" id="name-resumes"></div>
+          </div>
+        </div>
+
+        <div class="upload-group">
+          <label class="upload-label">Job Description</label>
+          <div class="tab-bar">
+            <button type="button" class="tab-btn active" data-tab="jd-file">Upload file</button>
+            <button type="button" class="tab-btn" data-tab="jd-text">Paste text</button>
+          </div>
+          <div class="tab-panel active" id="jd-file">
+            <div class="drop-zone" id="dz-jd">
+              <input type="file" name="jd" id="file-jd" accept=".txt,.md" />
+              <div class="drop-icon">📄</div>
+              <div class="drop-text">Click or drag &amp; drop a .txt file</div>
+              <div class="drop-name" id="name-jd"></div>
+            </div>
+          </div>
+          <div class="tab-panel" id="jd-text">
+            <textarea name="jd_text" rows="8" placeholder="Paste the job description here…"></textarea>
+          </div>
+        </div>
+      </div><!-- /form-col-left -->
+
+      <!-- Right column: config + run -->
+      <div class="form-col-right">
+        <div class="api-row">
+          <div class="section-label">Anthropic API Key</div>
+          {% if has_api_key %}
+            <div class="api-key-set">✓ API key loaded from environment</div>
+            <input type="hidden" name="api_key" value="" />
+          {% else %}
+            <span class="upload-hint">Used only on this local server — never stored.</span>
+            <input type="password" class="api-key-input" name="api_key"
+                   placeholder="sk-ant-api03-…" autocomplete="off" />
+          {% endif %}
+        </div>
+
+        <div class="section-label">Stability Tiers</div>
+        <div class="tier-legend" style="flex-direction:column;gap:10px;margin-bottom:24px;">
+          <div class="tier-badge"><span class="tier-dot t1"></span><span>Tier A — Most recent role ≥ 3 yrs</span></div>
+          <div class="tier-badge"><span class="tier-dot t2"></span><span>Tier B — Most recent role &lt; 3 yrs</span></div>
+          <div class="tier-badge"><span class="tier-dot t3"></span><span>Tier C — Recent degree, OPT review</span></div>
+        </div>
+
+        <button type="submit" class="run-btn" id="run-btn">Run Ranker</button>
+      </div><!-- /form-col-right -->
+
+    </div><!-- /form-grid -->
+  </form>
+
+  <div id="progress-panel">
+    <div class="progress-grid">
+
+      <!-- Left sidebar: status, summary, download -->
+      <div class="progress-sidebar">
+        <div class="progress-header">
+          <span class="progress-title" id="progress-title">Scoring Candidates</span>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span class="progress-counter" id="progress-counter"></span>
+            <span class="spinner" id="spinner"></span>
+          </div>
+        </div>
+        <div id="summary-bar">
+          <div class="summary-top" id="summary-top"></div>
+          <div class="summary-detail" id="summary-detail"></div>
+        </div>
+        <a id="download-btn">⬇&nbsp;&nbsp;Download Results (Excel)</a>
+        <div id="download-confirm">✓ File downloaded successfully</div>
+        <div id="new-run"><a onclick="location.reload()">← Start a new run</a></div>
+      </div><!-- /progress-sidebar -->
+
+      <!-- Right main: candidate cards -->
+      <div>
+        <div class="candidate-feed" id="candidate-feed"></div>
+      </div>
+
+    </div><!-- /progress-grid -->
+  </div>
+
+</div><!-- /card -->
+</div><!-- /section-ranker -->
+
+<!-- ══════════════════════════════════════════════════════════
+     SECTION: Activity Dashboard
+══════════════════════════════════════════════════════════ -->
+<div class="section" id="section-dashboard">
+<div class="card">
+
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Recruiting Activity</div>
+      <div class="dash-subtitle" id="dash-subtitle">Loading notifications…</div>
+    </div>
+    <button class="mark-all-btn" id="mark-all-btn" onclick="markAllRead()">Mark All as Read</button>
+  </div>
+
+  <div id="notifications-container">
+    <!-- populated by JS -->
+  </div>
+
+</div>
+</div><!-- /section-dashboard -->
+
+<!-- ── Resume side panel ────────────────────────────────── -->
+<div id="resume-backdrop" class="resume-backdrop"></div>
+
+<div id="resume-panel" class="resume-panel" role="dialog" aria-modal="true" aria-label="Resume Preview">
+  <div class="panel-header">
+    <div class="panel-header-left">
+      <div class="panel-label">Resume Preview</div>
+      <div class="panel-candidate-name" id="panel-name"></div>
+    </div>
+    <div class="panel-actions">
+      <button class="panel-preview-btn active" id="panel-preview-btn" onclick="showPreview()">👁 Preview</button>
+      <button class="panel-download-btn" id="panel-download-btn" onclick="downloadResume()">⬇ Download</button>
+      <button class="panel-close-btn" onclick="closeResumePanel()" aria-label="Close">✕</button>
+    </div>
+  </div>
+  <div class="panel-body" id="panel-body">
+    <div class="panel-loading" id="panel-loading">
+      <div class="spinner"></div>
+      <span>Loading resume…</span>
+    </div>
+    <div class="panel-error" id="panel-error">
+      <span style="font-size:1.5rem">📄</span>
+      <span id="panel-error-msg">Resume could not be loaded.</span>
+    </div>
+    <iframe id="resume-iframe" title="Resume Preview" style="opacity:0"></iframe>
+  </div>
+</div>
+
+<div class="footer">Brooklyn Sports &amp; Entertainment · Internal Tool</div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+// Nav tab switching
+// ══════════════════════════════════════════════════════════
+document.querySelectorAll(".nav-tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".nav-tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    tab.classList.add("active");
+    document.getElementById("section-" + tab.dataset.target).classList.add("active");
+    if (tab.dataset.target === "dashboard") loadNotifications();
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+// Ranker — drop zones
+// ══════════════════════════════════════════════════════════
+function wireDropZone(dzId, inputId, nameId) {
+  const dz = document.getElementById(dzId);
+  const input = document.getElementById(inputId);
+  const nameEl = document.getElementById(nameId);
+  const update = () => { const f = input.files[0]; if (f) { nameEl.textContent = f.name; dz.classList.add("has-file"); } };
+  input.addEventListener("change", update);
+  dz.addEventListener("dragover",  e => { e.preventDefault(); dz.classList.add("over"); });
+  dz.addEventListener("dragleave", ()  => dz.classList.remove("over"));
+  dz.addEventListener("drop", e => {
+    e.preventDefault(); dz.classList.remove("over");
+    if (e.dataTransfer.files.length) {
+      const dt = new DataTransfer(); dt.items.add(e.dataTransfer.files[0]);
+      input.files = dt.files; update();
+    }
+  });
+}
+wireDropZone("dz-csv",     "file-csv",     "name-csv");
+wireDropZone("dz-resumes", "file-resumes", "name-resumes");
+wireDropZone("dz-jd",      "file-jd",      "name-jd");
+
+// JD tabs
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.querySelectorAll(".tab-panel").forEach(p => p.classList.remove("active"));
+    btn.classList.add("active");
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  });
+});
+
+// ══════════════════════════════════════════════════════════
+// Ranker — form + live candidate cards
+// ══════════════════════════════════════════════════════════
+const form            = document.getElementById("ranker-form");
+const runBtn          = document.getElementById("run-btn");
+const errorBanner     = document.getElementById("error-banner");
+const progressPanel   = document.getElementById("progress-panel");
+const feed            = document.getElementById("candidate-feed");
+const spinner         = document.getElementById("spinner");
+const downloadBtn     = document.getElementById("download-btn");
+const newRun          = document.getElementById("new-run");
+const summaryBar      = document.getElementById("summary-bar");
+const progressCounter = document.getElementById("progress-counter");
+const progressTitle   = document.getElementById("progress-title");
+
+// Buffer of all parsed results — sorted and re-rendered on completion
+let _buffer = [];
+let currentJobId = null;
+const stats  = { total: 0, scored: 0, tierA: 0, tierB: 0, tierC: 0, noResume: 0 };
+
+function showError(msg) {
+  errorBanner.textContent = msg; errorBanner.style.display = "block";
+  runBtn.disabled = false; runBtn.textContent = "Run Ranker";
+}
+
+// Parse a ranker.py log line → structured object or null
+function parseLogLine(text) {
+  const ok = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+✓\s+tier=([ABC])\s+ny=([YN])\s+fit=([\d.]+)/);
+  if (ok) return { kind: "ok", idx: +ok[1], total: +ok[2], name: ok[3],
+                   tier: ok[4], ny: ok[5] === "Y", fit: parseFloat(ok[6]) };
+  const nr = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+⚠/);
+  if (nr) return { kind: "no_resume", idx: +nr[1], total: +nr[2], name: nr[3] };
+  const er = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+✗/);
+  if (er) return { kind: "error", idx: +er[1], total: +er[2], name: er[3] };
+  return null;
+}
+
+function fitClass(s) { return s >= 7 ? "fit-high" : s >= 4 ? "fit-mid" : "fit-low"; }
+
+// Sort: scored first (A→B→C, NY yes→no, fit desc), then no-resume/error
+function rankSort(a, b) {
+  const t = {A:0, B:1, C:2};
+  if (a.kind === "ok" && b.kind !== "ok") return -1;
+  if (a.kind !== "ok" && b.kind === "ok") return 1;
+  if (a.kind === "ok" && b.kind === "ok") {
+    const td = (t[a.tier] ?? 3) - (t[b.tier] ?? 3);
+    if (td !== 0) return td;
+    const nd = (a.ny ? 0 : 1) - (b.ny ? 0 : 1);
+    if (nd !== 0) return nd;
+    return (b.fit || 0) - (a.fit || 0);
+  }
+  return 0;
+}
+
+function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
+
+function buildCard(parsed, rankLabel, isFinal) {
+  const card = document.createElement("div");
+  if (parsed.kind === "ok") {
+    const isOpt  = parsed.tier === "C";
+    card.className = "cand-card" + (isOpt ? " opt-card" : "");
+    const optHtml  = isOpt ? `<span class="opt-badge">⚠ OPT</span>` : "";
+    const stabCls  = {A:"stab-a", B:"stab-b", C:"stab-c"}[parsed.tier] || "stab-b";
+    const nyCls    = parsed.ny ? "ny-yes" : "ny-no";
+    const nyLbl    = parsed.ny ? "NY ✓" : "NY";
+    const fCls     = fitClass(parsed.fit);
+    const rankCls  = isFinal ? "cand-rank final" : "cand-rank";
+    // Name is a clickable span; title tooltip hints that it opens the resume
+    const nameLink = currentJobId
+      ? `<span class="cand-name-link" data-name="${escAttr(parsed.name)}" title="Click to preview resume">${parsed.name}</span>`
+      : parsed.name;
+    card.innerHTML = `
+      <div class="${rankCls}">${rankLabel}</div>
+      <div class="cand-info">
+        <div class="cand-name">${nameLink}${optHtml}</div>
+      </div>
+      <div class="cand-signals">
+        <span class="stab-badge ${stabCls}">Tier ${parsed.tier}</span>
+        <span class="ny-badge ${nyCls}">${nyLbl}</span>
+        <span class="fit-score ${fCls}">${parsed.fit.toFixed(1)}</span>
+      </div>`;
+  } else if (parsed.kind === "no_resume") {
+    card.className = "cand-card no-resume-card";
+    card.innerHTML = `
+      <div class="cand-rank">${rankLabel}</div>
+      <div class="cand-info"><div class="cand-name">${parsed.name}</div></div>
+      <div class="cand-signals"><span class="fit-none">no resume</span></div>`;
+  } else {
+    card.className = "cand-card error-card";
+    card.innerHTML = `
+      <div class="cand-rank">${rankLabel}</div>
+      <div class="cand-info"><div class="cand-name">${parsed.name}</div></div>
+      <div class="cand-signals"><span class="fit-none">scoring error</span></div>`;
+  }
+  return card;
+}
+
+// Append one live card while processing (processing order, no final rank yet)
+function appendLiveCard(parsed) {
+  const liveNum = _buffer.length;
+  feed.appendChild(buildCard(parsed, liveNum, false));
+  feed.scrollTop = feed.scrollHeight;
+  if (stats.total > 0) {
+    progressCounter.textContent = `${liveNum} / ${stats.total}`;
+  }
+}
+
+// After all done: sort buffer, wipe feed, re-render with final rank numbers
+function renderSortedFeed() {
+  _buffer.sort(rankSort);
+  feed.innerHTML = "";
+  let rank = 1;
+  _buffer.forEach(r => {
+    const label = r.kind === "ok" ? `#${rank++}` : "—";
+    feed.appendChild(buildCard(r, label, true));
+  });
+  feed.scrollTop = 0; // scroll back to top to show #1 first
+}
+
+function showSummaryBar() {
+  const parts = [];
+  if (stats.tierA) parts.push(`${stats.tierA} Tier A`);
+  if (stats.tierB) parts.push(`${stats.tierB} Tier B`);
+  if (stats.tierC) parts.push(`${stats.tierC} Tier C`);
+  document.getElementById("summary-top").textContent =
+    `✓ ${stats.scored} candidate${stats.scored !== 1 ? "s" : ""} ranked`;
+  const detail = [parts.join(" · ")];
+  if (stats.tierC > 0) detail.push(`<span class="summary-opt">${stats.tierC} flagged for OPT review</span>`);
+  if (stats.noResume > 0) detail.push(`${stats.noResume} skipped (no resume)`);
+  document.getElementById("summary-detail").innerHTML = detail.join(" · ");
+  summaryBar.style.display = "block";
+}
+
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  errorBanner.style.display = "none";
+  if (!document.getElementById("file-csv").files.length)     { showError("Please select a CSV file."); return; }
+  if (!document.getElementById("file-resumes").files.length) { showError("Please select a resumes ZIP file."); return; }
+  const jdFileOk = document.getElementById("file-jd").files.length > 0;
+  const jdTextOk = (form.querySelector("textarea[name='jd_text']")||{value:""}).value.trim().length > 0;
+  if (!jdFileOk && !jdTextOk) { showError("Please upload a job description or paste the text."); return; }
+
+  runBtn.disabled = true; runBtn.textContent = "Uploading…";
+  _buffer = [];
+  Object.assign(stats, { total: 0, scored: 0, tierA: 0, tierB: 0, tierC: 0, noResume: 0 });
+
+  let jobId;
+  try {
+    const res = await fetch("/run", { method: "POST", body: new FormData(form) });
+    let data; try { data = await res.json(); } catch(_) { data = {}; }
+    if (!res.ok) { showError(data.error || `Server error ${res.status}`); return; }
+    jobId = data.job_id;
+    currentJobId = jobId;
+  } catch(err) { showError("Network error — is the server running?"); return; }
+
+  form.style.display = "none";
+  progressPanel.style.display = "block";
+
+  const es = new EventSource(`/stream/${jobId}`);
+  es.onmessage = evt => {
+    let msg; try { msg = JSON.parse(evt.data); } catch(_) { return; }
+
+    if (msg.type === "log") {
+      const parsed = parseLogLine(msg.text);
+      if (!parsed) return;
+      if (stats.total === 0 && parsed.total) stats.total = parsed.total;
+      // Accumulate stats
+      if (parsed.kind === "ok") {
+        stats.scored++;
+        if (parsed.tier === "A") stats.tierA++;
+        else if (parsed.tier === "B") stats.tierB++;
+        else if (parsed.tier === "C") stats.tierC++;
+      } else if (parsed.kind === "no_resume") {
+        stats.noResume++;
+      }
+      _buffer.push(parsed);
+      appendLiveCard(parsed);
+
+    } else if (msg.type === "done") {
+      es.close();
+      spinner.style.display = "none";
+      progressCounter.textContent = "";
+      progressTitle.textContent = "Ranked Results";
+      renderSortedFeed();   // re-render in final rank order
+      showSummaryBar();
+      downloadBtn.href = `/download/${jobId}`;
+      downloadBtn.style.display = "block";
+      newRun.style.display = "block";
+
+    } else if (msg.type === "error") {
+      es.close(); spinner.style.display = "none";
+      const d = document.createElement("div");
+      d.className = "feed-status"; d.textContent = "✗ " + msg.text;
+      feed.appendChild(d); newRun.style.display = "block";
+
+    } else if (msg.type === "end") {
+      es.close(); spinner.style.display = "none";
+    }
+  };
+  es.onerror = () => {
+    es.close(); spinner.style.display = "none";
+    const d = document.createElement("div");
+    d.className = "feed-status"; d.textContent = "Connection lost.";
+    feed.appendChild(d); newRun.style.display = "block";
+  };
+});
+
+downloadBtn && downloadBtn.addEventListener("click", () => {
+  setTimeout(() => {
+    document.getElementById("download-confirm").style.display = "block";
+  }, 800);
+});
+
+// ══════════════════════════════════════════════════════════
+// Dashboard — notifications
+// ══════════════════════════════════════════════════════════
+
+let _allNotifications = [];
+
+function relativeTime(isoStr) {
+  const then = new Date(isoStr);
+  const now  = new Date();
+  const diffMs = now - then;
+  const mins  = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+  const days  = Math.floor(diffMs / 86400000);
+  if (mins  <  1) return "just now";
+  if (mins  < 60) return `${mins}m ago`;
+  if (hours < 24) return `${hours}h ago`;
+  if (days  === 1) return "Yesterday";
+  return `${days}d ago`;
+}
+
+function dateGroupKey(isoStr) {
+  // Returns "TODAY", "YESTERDAY", or "MMM D" for grouping
+  const d   = new Date(isoStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const itemDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.round((today - itemDay) / 86400000);
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+function buildNotificationCard(n) {
+  const isAvail = n.type === "availability";
+  const icon    = isAvail ? "📅" : "📋";
+  const typeLabel = isAvail ? "Availability" : "Interview Scorecard";
+  const detail  = isAvail
+    ? `Submitted availability · <strong>${n.role}</strong>`
+    : `Scorecard by <strong>${n.interviewer_name}</strong> <span style="color:var(--grey-2);">(${n.interviewer_title})</span> · <strong>${n.role}</strong>`;
+
+  return `
+    <div class="notif-card" id="notif-${n.id}" data-read="${n.read}">
+      <div class="notif-stripe"></div>
+      <div class="notif-body">
+        <div class="notif-icon">${icon}</div>
+        <div class="notif-main">
+          <div class="notif-type-chip">${typeLabel}</div>
+          <div class="notif-candidate">${n.candidate_name}</div>
+          <div class="notif-detail">${detail}</div>
+        </div>
+        <div class="notif-meta">
+          <span class="notif-time">${relativeTime(n.timestamp)}</span>
+          <button class="mark-read-btn" onclick="markRead('${n.id}')">Mark as Read</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderNotifications(notifications) {
+  const container = document.getElementById("notifications-container");
+  if (!notifications.length) {
+    container.innerHTML = '<div class="dash-empty">No notifications yet.</div>';
+    return;
+  }
+
+  // Group by date
+  const groups = {};
+  const groupOrder = [];
+  notifications.forEach(n => {
+    const key = dateGroupKey(n.timestamp);
+    if (!groups[key]) { groups[key] = []; groupOrder.push(key); }
+    groups[key].push(n);
+  });
+
+  container.innerHTML = groupOrder.map(key => `
+    <div class="date-group">
+      <div class="date-heading">${key}</div>
+      ${groups[key].map(buildNotificationCard).join("")}
+    </div>
+  `).join("");
+}
+
+function updateBadgeAndSubtitle() {
+  const unread = _allNotifications.filter(n => !n.read).length;
+  const badge  = document.getElementById("unread-badge");
+  const subtitle = document.getElementById("dash-subtitle");
+  const total  = _allNotifications.length;
+
+  if (unread > 0) {
+    badge.textContent = unread;
+    badge.style.display = "inline-block";
+    subtitle.textContent = `${unread} unread · ${total} total`;
+  } else {
+    badge.style.display = "none";
+    subtitle.textContent = `All caught up · ${total} notifications`;
+  }
+}
+
+async function loadNotifications() {
+  try {
+    const res  = await fetch("/api/notifications");
+    _allNotifications = await res.json();
+    renderNotifications(_allNotifications);
+    updateBadgeAndSubtitle();
+  } catch(err) {
+    document.getElementById("notifications-container").innerHTML =
+      '<div class="dash-empty">Could not load notifications.</div>';
+  }
+}
+
+async function markRead(id) {
+  // Immediately update UI
+  const card = document.getElementById("notif-" + id);
+  if (card) card.setAttribute("data-read", "true");
+  const n = _allNotifications.find(x => x.id === id);
+  if (n) n.read = true;
+  updateBadgeAndSubtitle();
+
+  // Persist to server
+  await fetch(`/api/notifications/${id}/read`, { method: "POST" });
+}
+
+async function markAllRead() {
+  _allNotifications.forEach(n => { n.read = true; });
+  document.querySelectorAll(".notif-card").forEach(c => c.setAttribute("data-read", "true"));
+  updateBadgeAndSubtitle();
+  await fetch("/api/notifications/read-all", { method: "POST" });
+}
+
+// Load unread count on initial page load (so badge shows even before switching tabs)
+loadNotifications();
+
+// ══════════════════════════════════════════════════════════
+// Resume panel
+// ══════════════════════════════════════════════════════════
+
+const resumePanel    = document.getElementById("resume-panel");
+const resumeBackdrop = document.getElementById("resume-backdrop");
+const resumeIframe   = document.getElementById("resume-iframe");
+const panelLoading   = document.getElementById("panel-loading");
+const panelError     = document.getElementById("panel-error");
+const panelName      = document.getElementById("panel-name");
+
+let _resumeDownloadUrl = "";
+
+function openResumePanel(name, jobId) {
+  const enc = encodeURIComponent(name);
+  const previewUrl  = `/resume/${jobId}?name=${enc}`;
+  _resumeDownloadUrl = `/resume/${jobId}?name=${enc}&download=1`;
+
+  panelName.textContent = name;
+
+  // Reset state
+  panelError.style.display   = "none";
+  panelLoading.style.display = "flex";
+  resumeIframe.style.opacity = "0";
+
+  resumeIframe.onerror = () => {
+    panelLoading.style.display = "none";
+    panelError.style.display   = "flex";
+    document.getElementById("panel-error-msg").textContent = "Could not load resume.";
+  };
+  resumeIframe.onload = () => {
+    panelLoading.style.display = "none";
+    resumeIframe.style.opacity = "1";
+  };
+  resumeIframe.src = previewUrl;
+
+  resumeBackdrop.classList.add("open");
+  resumePanel.classList.add("open");
+  document.body.style.overflow = "hidden";
+}
+
+function showPreview() {
+  // Preview is always the active state; button is cosmetic only
+  document.getElementById("panel-preview-btn").classList.add("active");
+}
+
+function downloadResume() {
+  if (!_resumeDownloadUrl) return;
+  const a = document.createElement("a");
+  a.href = _resumeDownloadUrl;
+  a.download = "";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
+
+function closeResumePanel() {
+  resumeBackdrop.classList.remove("open");
+  resumePanel.classList.remove("open");
+  document.body.style.overflow = "";
+  // Clear iframe after slide-out completes so we don't flash old content on next open
+  setTimeout(() => {
+    resumeIframe.src = "";
+    resumeIframe.style.opacity = "0";
+    panelLoading.style.display = "flex";
+    panelError.style.display   = "none";
+  }, 300);
+}
+
+// Event delegation — click any name link in the feed
+document.getElementById("candidate-feed").addEventListener("click", e => {
+  const link = e.target.closest(".cand-name-link");
+  if (link && currentJobId) openResumePanel(link.dataset.name, currentJobId);
+});
+
+// Close on backdrop click
+resumeBackdrop.addEventListener("click", closeResumePanel);
+
+// Close on Escape
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && resumePanel.classList.contains("open")) closeResumePanel();
+});
+</script>
+</body>
+</html>
