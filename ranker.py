@@ -44,7 +44,6 @@ from scoring import (
     find_resume_file,
     process_candidate,
     sort_key,
-    SYSTEM_TEMPLATE,
     extract_resume_text,  # re-exported so importers don't need to know about scoring.py
     _print_lock,
 )
@@ -64,51 +63,50 @@ FLAG_RED   = "FF0000"
 FLAG_FILL  = "FFD7D7"
 
 COLUMN_WIDTHS = {
-    "Rank":                  6,
-    "FLAG":                  13,
-    "Candidate Name":        26,
-    "Email":                 30,
-    "Applied At":            16,
-    "Stage":                 22,
-    "Greenhouse Location":   22,
-    "Stability Tier":        14,
-    "NY Signal":             10,
-    "JD Fit Composite":      14,
-    "JD Fit Tier 1\n(LangGraph/Bedrock/AWS)":   22,
-    "JD Fit Tier 2\n(MLOps/DevOps/AI Agents)":  24,
-    "JD Fit Tier 3\n(General AI/ML)":            20,
-    "Keywords Found":        34,
-    "Stability Rationale":   42,
-    "NY Rationale":          36,
-    "Fit Rationale":         42,
-    "Detected Location":     22,
+    "Rank":                   6,
+    "Candidate Name":         26,
+    "Email":                  30,
+    "Applied At":             16,
+    "Stage":                  22,
+    "Greenhouse Location":    22,
+    "Stability Tier":         14,
+    "Job Hopper":             12,
+    "JD Fit Composite":       14,
+    "Layer 1 (Foundation)":   20,
+    "Layer 2 (AI/ML)":        16,
+    "Keywords Detected":      34,
+    "Est. Experience (yrs)":  18,
+    "Stability Rationale":    42,
+    "Job Hopper Rationale":   36,
+    "Layer 1 Rationale":      42,
+    "Layer 2 Rationale":      42,
+    "NY Signal":              10,
+    "NY Rationale":           36,
+    "Detected Location":      22,
     "Most Recent Role (yrs)": 18,
-    "Recent Degree Year":    16,
-    "Resume Found":          12,
+    "Resume Found":           12,
 }
 
 FIT_SCORE_COLS = {
     "JD Fit Composite",
-    "JD Fit Tier 1\n(LangGraph/Bedrock/AWS)",
-    "JD Fit Tier 2\n(MLOps/DevOps/AI Agents)",
-    "JD Fit Tier 3\n(General AI/ML)",
+    "Layer 1 (Foundation)",
+    "Layer 2 (AI/ML)",
 }
 
 PREFERRED_COLUMNS = [
-    "Rank", "FLAG", "Candidate Name", "Email", "Applied At", "Stage",
-    "Greenhouse Location", "Stability Tier", "NY Signal",
-    "JD Fit Composite",
-    "JD Fit Tier 1\n(LangGraph/Bedrock/AWS)",
-    "JD Fit Tier 2\n(MLOps/DevOps/AI Agents)",
-    "JD Fit Tier 3\n(General AI/ML)",
-    "Keywords Found",
-    "Stability Rationale", "NY Rationale", "Fit Rationale",
-    "Detected Location", "Most Recent Role (yrs)", "Recent Degree Year", "Resume Found",
+    "Rank", "Candidate Name", "Email", "Applied At", "Stage",
+    "Greenhouse Location", "Stability Tier", "Job Hopper",
+    "JD Fit Composite", "Layer 1 (Foundation)", "Layer 2 (AI/ML)",
+    "Keywords Detected", "Est. Experience (yrs)",
+    "Stability Rationale", "Job Hopper Rationale",
+    "Layer 1 Rationale", "Layer 2 Rationale",
+    "NY Signal", "NY Rationale", "Detected Location",
+    "Most Recent Role (yrs)", "Resume Found",
 ]
 
 
 def _stability_fill(tier: str) -> PatternFill:
-    color = {"A": GREEN, "B": YELLOW, "C": RED}.get(tier)
+    color = {"A": GREEN, "B": YELLOW}.get(tier)
     return (PatternFill(start_color=color, end_color=color, fill_type="solid")
             if color else PatternFill())
 
@@ -240,10 +238,6 @@ def main() -> None:
         print(f"Error: No name column found. Columns: {list(df_gh.columns)}", file=sys.stderr)
         sys.exit(1)
 
-    today         = datetime.now().strftime("%Y-%m-%d")
-    cutoff_year   = datetime.now().year - 3
-    system_prompt = SYSTEM_TEMPLATE.format(cutoff_year=cutoff_year, today=today)
-
     resume_files = [
         f for f in resumes_dir.iterdir()
         if f.suffix.lower() in (".pdf", ".docx", ".doc", ".txt") and f.is_file()
@@ -277,7 +271,7 @@ def main() -> None:
         future_to_slot = {
             executor.submit(
                 process_candidate,
-                idx, total, client, name, resume_file, system_prompt, gh_row,
+                idx, total, client, name, resume_file, gh_row,
             ): (idx - 1)
             for idx, total, name, resume_file, gh_row in tasks
         }
@@ -290,8 +284,8 @@ def main() -> None:
                 with _print_lock:
                     print(f"[ERROR] {name}: {exc}", flush=True)
                 results[slot] = {
-                    "_stability_tier": None, "_ny_signal": False, "_fit_composite": None,
-                    "FLAG": "", "Candidate Name": name, "Stability Tier": "",
+                    "_stability_tier": None, "_fit_composite": None, "_job_hopper_flag": False,
+                    "Candidate Name": name, "Stability Tier": "", "Job Hopper": "",
                     "NY Signal": "No", "JD Fit Composite": None, "Resume Found": "No",
                     "Stability Rationale": str(exc),
                 }
@@ -300,7 +294,7 @@ def main() -> None:
 
     out_df = pd.DataFrame(results)
     out_df.insert(0, "Rank", range(1, len(out_df) + 1))
-    out_df = out_df.drop(columns=["_stability_tier", "_ny_signal", "_fit_composite"], errors="ignore")
+    out_df = out_df.drop(columns=["_stability_tier", "_fit_composite", "_job_hopper_flag"], errors="ignore")
 
     ordered = [c for c in PREFERRED_COLUMNS if c in out_df.columns]
     extras  = [c for c in out_df.columns if c not in ordered]
@@ -309,11 +303,11 @@ def main() -> None:
     print(f"\nWriting → {output_path}")
     write_excel(out_df, output_path)
 
-    flagged   = (out_df.get("FLAG", pd.Series(dtype=str)) == "⚠ OPT REVIEW").sum()
-    no_resume = (out_df.get("Resume Found", pd.Series(dtype=str)) == "No").sum()
+    job_hoppers = (out_df.get("Job Hopper", pd.Series(dtype=str)) == "⚠ Review").sum()
+    no_resume   = (out_df.get("Resume Found", pd.Series(dtype=str)) == "No").sum()
     print(
         f"Done. {total - no_resume}/{total} candidates scored, "
-        f"{flagged} flagged for OPT review, "
+        f"{job_hoppers} flagged as job hoppers, "
         f"{no_resume} skipped (no resume)."
     )
 

@@ -14,13 +14,8 @@ from pathlib import Path
 from scoring import (
     _normalize,
     find_resume_file,
-    score_jd_fit,
+    detect_keywords,
     compute_fit_composite,
-    _classify_resume_lines,
-    _depth_for_pattern,
-    TIER1_KEYWORDS,
-    TIER2_KEYWORDS,
-    TIER3_KEYWORDS,
 )
 
 PASS = "✓"
@@ -67,11 +62,11 @@ check("returns None when no match", find_resume_file("Nobody Here",      files) 
 
 
 # ---------------------------------------------------------------------------
-# score_jd_fit — depth scoring
+# detect_keywords
 # ---------------------------------------------------------------------------
-print("\nscore_jd_fit — depth scoring")
+print("\ndetect_keywords")
 
-DEEP_RESUME = """
+KEYWORD_RESUME = """
 Alice Smith
 alice@example.com | Brooklyn, NY
 
@@ -87,20 +82,7 @@ Skills
 Python, AWS, DevOps, Machine Learning, AI Agents
 """
 
-SKILLS_ONLY_RESUME = """
-Bob Jones
-bob@example.com
-
-Experience
-
-Software Engineer | Generic Corp  |  2021 – Present
-• Built web services and REST APIs
-
-Skills
-AWS, LangGraph, MLOps, DevOps, CI/CD, LLM, Machine Learning
-"""
-
-NO_MATCH_RESUME = """
+NO_KEYWORD_RESUME = """
 Carol Davis
 carol@example.com
 
@@ -110,55 +92,36 @@ Data Analyst | Numbers Co  |  2020 – Present
 • Wrote SQL reports and Excel dashboards
 """
 
-deep  = score_jd_fit(DEEP_RESUME)
-skill = score_jd_fit(SKILLS_ONLY_RESUME)
-none_ = score_jd_fit(NO_MATCH_RESUME)
+kw = detect_keywords(KEYWORD_RESUME)
+no_kw = detect_keywords(NO_KEYWORD_RESUME)
 
-check("deep resume: T1 > skills-only T1",
-      deep["fit_tier1"] > skill["fit_tier1"],
-      f"deep={deep['fit_tier1']} skill={skill['fit_tier1']}")
-check("deep resume: T2 > 0",
-      deep["fit_tier2"] > 0,
-      f"got {deep['fit_tier2']}")
-check("deep resume: T3 > 0",
-      deep["fit_tier3"] > 0,
-      f"got {deep['fit_tier3']}")
-check("skills-only: T1 > 0 (found in skills section)",
-      skill["fit_tier1"] > 0,
-      f"got {skill['fit_tier1']}")
-check("no-match resume: T1 == 0",
-      none_["fit_tier1"] == 0,
-      f"got {none_['fit_tier1']}")
-check("no-match resume: T2 == 0",
-      none_["fit_tier2"] == 0,
-      f"got {none_['fit_tier2']}")
-check("no-match resume: T3 == 0",
-      none_["fit_tier3"] == 0,
-      f"got {none_['fit_tier3']}")
-check("deep resume: LangGraph in keywords_found",
-      "LangGraph" in deep["fit_keywords_found"],
-      str(deep["fit_keywords_found"]))
-check("empty resume returns zeros",
-      score_jd_fit("")["fit_tier1"] == 0)
-check("error placeholder returns zeros",
-      score_jd_fit("[PDF read error: ...]")["fit_tier1"] == 0)
+check("LangGraph detected",          "LangGraph"      in kw, str(kw))
+check("Amazon Bedrock detected",     "Amazon Bedrock" in kw, str(kw))
+check("AWS detected",                "AWS"            in kw, str(kw))
+check("MLOps detected",              "MLOps"          in kw, str(kw))
+check("no false positives on plain resume", no_kw == [], str(no_kw))
+check("empty string returns []",     detect_keywords("") == [])
 
 
 # ---------------------------------------------------------------------------
 # compute_fit_composite
 # ---------------------------------------------------------------------------
 print("\ncompute_fit_composite")
-check("perfect scores → 10",  compute_fit_composite(10, 10, 10) == 10.0)
-check("zero scores → 0",      compute_fit_composite(0,  0,  0)  == 0.0)
-check("T1 weighted 60%",
-      compute_fit_composite(10, 0, 0) == 6.0,
-      f"got {compute_fit_composite(10, 0, 0)}")
-check("T2 weighted 30%",
-      compute_fit_composite(0, 10, 0) == 3.0,
-      f"got {compute_fit_composite(0, 10, 0)}")
-check("T3 weighted 10%",
-      compute_fit_composite(0, 0, 10) == 1.0,
-      f"got {compute_fit_composite(0, 0, 10)}")
+check("perfect scores → 10",
+      compute_fit_composite(10, 10) == 10.0,
+      f"got {compute_fit_composite(10, 10)}")
+check("zero scores → 0",
+      compute_fit_composite(0, 0) == 0.0,
+      f"got {compute_fit_composite(0, 0)}")
+check("L1 only (no bonus): 10*0.4 = 4.0",
+      compute_fit_composite(10, 0) == 4.0,
+      f"got {compute_fit_composite(10, 0)}")
+check("L2 only (no bonus): 10*0.6 = 6.0",
+      compute_fit_composite(0, 10) == 6.0,
+      f"got {compute_fit_composite(0, 10)}")
+check("both >= 5 receives bonus above base",
+      compute_fit_composite(7, 7) > round(7 * 0.4 + 7 * 0.6, 1),
+      f"got {compute_fit_composite(7, 7)}, base would be 7.0")
 
 
 # ---------------------------------------------------------------------------
