@@ -237,7 +237,7 @@
     .tier-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
     .tier-dot.t1 { background: #22C55E; }
     .tier-dot.t2 { background: #F59E0B; }
-    .tier-dot.t3 { background: #EF4444; }
+    .tier-dot.flag { font-size: 0.9rem; }
 
     /* ── Run button ──────────────────────────────────────────── */
     .run-btn {
@@ -724,7 +724,7 @@
         <div class="tier-legend" style="flex-direction:column;gap:10px;margin-bottom:24px;">
           <div class="tier-badge"><span class="tier-dot t1"></span><span>Tier A — Most recent role ≥ 3 yrs</span></div>
           <div class="tier-badge"><span class="tier-dot t2"></span><span>Tier B — Most recent role &lt; 3 yrs</span></div>
-          <div class="tier-badge"><span class="tier-dot t3"></span><span>Tier C — Recent degree, OPT review</span></div>
+          <div class="tier-badge"><span style="font-size:0.9rem;line-height:1;">🚩</span><span>Job Hopper — pattern of short tenures, review history</span></div>
         </div>
 
         <button type="submit" class="run-btn" id="run-btn">Run Ranker</button>
@@ -881,7 +881,7 @@ const progressTitle   = document.getElementById("progress-title");
 // Buffer of all parsed results — sorted and re-rendered on completion
 let _buffer = [];
 let currentJobId = null;
-const stats  = { total: 0, scored: 0, tierA: 0, tierB: 0, tierC: 0, noResume: 0 };
+const stats  = { total: 0, scored: 0, tierA: 0, tierB: 0, jobHoppers: 0, noResume: 0 };
 
 function showError(msg) {
   errorBanner.textContent = msg; errorBanner.style.display = "block";
@@ -890,9 +890,10 @@ function showError(msg) {
 
 // Parse a ranker.py log line → structured object or null
 function parseLogLine(text) {
-  const ok = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+✓\s+tier=([ABC])\s+ny=([YN])\s+fit=([\d.]+)/);
+  const ok = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+✓\s+tier=([AB])\s+ny=([YN])\s+L1=(\d+)\s+L2=(\d+)\s+fit=([\d.]+)(\s+🚩)?/);
   if (ok) return { kind: "ok", idx: +ok[1], total: +ok[2], name: ok[3],
-                   tier: ok[4], ny: ok[5] === "Y", fit: parseFloat(ok[6]) };
+                   tier: ok[4], ny: ok[5] === "Y", fit: parseFloat(ok[8]),
+                   jobHopper: !!ok[9] };
   const nr = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+⚠/);
   if (nr) return { kind: "no_resume", idx: +nr[1], total: +nr[2], name: nr[3] };
   const er = text.match(/\[\s*(\d+)\/(\d+)\]\s+(.+?)\s+…\s+✗/);
@@ -902,17 +903,17 @@ function parseLogLine(text) {
 
 function fitClass(s) { return s >= 7 ? "fit-high" : s >= 4 ? "fit-mid" : "fit-low"; }
 
-// Sort: scored first (A→B→C, NY yes→no, fit desc), then no-resume/error
+// Sort: scored first (A→B, fit desc, job hoppers last within tier), then no-resume/error
 function rankSort(a, b) {
-  const t = {A:0, B:1, C:2};
+  const t = {A:0, B:1};
   if (a.kind === "ok" && b.kind !== "ok") return -1;
   if (a.kind !== "ok" && b.kind === "ok") return 1;
   if (a.kind === "ok" && b.kind === "ok") {
-    const td = (t[a.tier] ?? 3) - (t[b.tier] ?? 3);
+    const td = (t[a.tier] ?? 2) - (t[b.tier] ?? 2);
     if (td !== 0) return td;
-    const nd = (a.ny ? 0 : 1) - (b.ny ? 0 : 1);
-    if (nd !== 0) return nd;
-    return (b.fit || 0) - (a.fit || 0);
+    const fd = (b.fit || 0) - (a.fit || 0);
+    if (fd !== 0) return fd;
+    return (a.jobHopper ? 1 : 0) - (b.jobHopper ? 1 : 0);
   }
   return 0;
 }
@@ -922,14 +923,13 @@ function escAttr(s) { return s.replace(/&/g,"&amp;").replace(/"/g,"&quot;"); }
 function buildCard(parsed, rankLabel, isFinal) {
   const card = document.createElement("div");
   if (parsed.kind === "ok") {
-    const isOpt  = parsed.tier === "C";
-    card.className = "cand-card" + (isOpt ? " opt-card" : "");
-    const optHtml  = isOpt ? `<span class="opt-badge">⚠ OPT</span>` : "";
-    const stabCls  = {A:"stab-a", B:"stab-b", C:"stab-c"}[parsed.tier] || "stab-b";
-    const nyCls    = parsed.ny ? "ny-yes" : "ny-no";
-    const nyLbl    = parsed.ny ? "NY ✓" : "NY";
-    const fCls     = fitClass(parsed.fit);
-    const rankCls  = isFinal ? "cand-rank final" : "cand-rank";
+    card.className = "cand-card";
+    const stabCls    = {A:"stab-a", B:"stab-b"}[parsed.tier] || "stab-b";
+    const nyCls      = parsed.ny ? "ny-yes" : "ny-no";
+    const nyLbl      = parsed.ny ? "NY ✓" : "NY";
+    const fCls       = fitClass(parsed.fit);
+    const rankCls    = isFinal ? "cand-rank final" : "cand-rank";
+    const hopperHtml = parsed.jobHopper ? `<span class="opt-badge">🚩 Job Hopper</span>` : "";
     // Name is a clickable span; title tooltip hints that it opens the resume
     const nameLink = currentJobId
       ? `<span class="cand-name-link" data-name="${escAttr(parsed.name)}" title="Click to preview resume">${parsed.name}</span>`
@@ -937,7 +937,7 @@ function buildCard(parsed, rankLabel, isFinal) {
     card.innerHTML = `
       <div class="${rankCls}">${rankLabel}</div>
       <div class="cand-info">
-        <div class="cand-name">${nameLink}${optHtml}</div>
+        <div class="cand-name">${nameLink}${hopperHtml}</div>
       </div>
       <div class="cand-signals">
         <span class="stab-badge ${stabCls}">Tier ${parsed.tier}</span>
@@ -986,11 +986,10 @@ function showSummaryBar() {
   const parts = [];
   if (stats.tierA) parts.push(`${stats.tierA} Tier A`);
   if (stats.tierB) parts.push(`${stats.tierB} Tier B`);
-  if (stats.tierC) parts.push(`${stats.tierC} Tier C`);
   document.getElementById("summary-top").textContent =
     `✓ ${stats.scored} candidate${stats.scored !== 1 ? "s" : ""} ranked`;
   const detail = [parts.join(" · ")];
-  if (stats.tierC > 0) detail.push(`<span class="summary-opt">${stats.tierC} flagged for OPT review</span>`);
+  if (stats.jobHoppers > 0) detail.push(`<span class="summary-opt">🚩 ${stats.jobHoppers} job hopper${stats.jobHoppers !== 1 ? "s" : ""} flagged</span>`);
   if (stats.noResume > 0) detail.push(`${stats.noResume} skipped (no resume)`);
   document.getElementById("summary-detail").innerHTML = detail.join(" · ");
   summaryBar.style.display = "block";
@@ -1007,7 +1006,7 @@ form.addEventListener("submit", async e => {
 
   runBtn.disabled = true; runBtn.textContent = "Uploading…";
   _buffer = [];
-  Object.assign(stats, { total: 0, scored: 0, tierA: 0, tierB: 0, tierC: 0, noResume: 0 });
+  Object.assign(stats, { total: 0, scored: 0, tierA: 0, tierB: 0, jobHoppers: 0, noResume: 0 });
 
   let jobId;
   try {
@@ -1034,7 +1033,7 @@ form.addEventListener("submit", async e => {
         stats.scored++;
         if (parsed.tier === "A") stats.tierA++;
         else if (parsed.tier === "B") stats.tierB++;
-        else if (parsed.tier === "C") stats.tierC++;
+        if (parsed.jobHopper) stats.jobHoppers++;
       } else if (parsed.kind === "no_resume") {
         stats.noResume++;
       }
