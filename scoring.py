@@ -30,7 +30,7 @@ from docx import Document
 # Config — change these here, no logic edits needed elsewhere
 # ---------------------------------------------------------------------------
 
-MODEL            = "claude-opus-4-7"   # swap model version here only
+MODEL            = "claude-opus-4-8"   # swap model version here only
 MAX_RESUME_CHARS = 14_000
 MAX_RETRIES      = 3
 RETRY_BASE_DELAY = 2.0                 # seconds; doubles on each retry
