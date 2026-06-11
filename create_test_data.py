@@ -280,6 +280,89 @@ CANDIDATES = [
             "GitHub Actions, Jenkins, Docker, Python, CI/CD, observability — no ML/LLM experience"
         ),
     },
+    # ── RECENT GRADS — NY local, short tenure, recent degree ─────────────
+    {
+        "name": "Daniel Reyes",
+        "email": "daniel.reyes@email.com",
+        "stage": "Applied",
+        "applied_at": "2025-04-14",
+        "location": "Queens, NY",
+        "summary": (
+            "MLOps Engineer with strong hands-on skills in LLM infrastructure and AWS. "
+            "Built production-grade agentic pipelines using LangGraph and Amazon Bedrock during "
+            "graduate research and a post-graduation role at a Manhattan AI startup. M.S. in "
+            "Computer Science from Columbia University, completed May 2024."
+        ),
+        "experience": [
+            {
+                "title": "MLOps Engineer",
+                "company": "Mosaic AI (startup)",
+                "location": "New York, NY",
+                "dates": "2024 – Present",
+                "bullets": [
+                    "Builds LangGraph-based multi-agent workflows for enterprise document analysis; deploys on AWS ECS with CI/CD pipelines managed via GitHub Actions.",
+                    "Integrated Amazon Bedrock (Claude and Titan models) for summarization and extraction tasks; owns prompt versioning and evaluation pipelines.",
+                    "Implements MLOps observability using CloudWatch and custom LLM evaluation metrics; monitors hallucination rates and latency p95.",
+                    "Manages Kubernetes clusters for model serving infrastructure; automated blue-green deployments reducing downtime to zero.",
+                ],
+            },
+            {
+                "title": "Graduate Research Assistant — ML Systems Lab",
+                "company": "Columbia University",
+                "location": "New York, NY",
+                "dates": "2022 – 2024",
+                "bullets": [
+                    "Developed RAG pipelines and LLM evaluation benchmarks for academic research on agentic systems.",
+                    "Published paper on LLM observability tooling; built open-source MLflow-based evaluation framework.",
+                ],
+            },
+        ],
+        "education": "M.S. Computer Science, Columbia University, May 2024; B.S. Computer Science, NYU, 2022",
+        "skills": (
+            "AWS (Bedrock, ECS, Lambda, CloudWatch, S3), LangGraph, LangChain, Python, "
+            "Kubernetes, Docker, GitHub Actions, CI/CD, MLflow, RAG, LLM evaluation, "
+            "observability, agentic workflows, Generative AI"
+        ),
+    },
+    {
+        "name": "Natalie Russo",
+        "email": "natalie.russo@email.com",
+        "stage": "Applied",
+        "applied_at": "2025-04-15",
+        "location": "Astoria, NY",
+        "summary": (
+            "Junior software engineer from Queens with a B.S. in Information Technology completed in 2023. "
+            "One year of professional experience in backend development with some exposure to AWS and basic "
+            "machine learning. Interested in transitioning toward AI/ML infrastructure."
+        ),
+        "experience": [
+            {
+                "title": "Software Engineer",
+                "company": "Revit Health (startup)",
+                "location": "New York, NY",
+                "dates": "2024 – Present",
+                "bullets": [
+                    "Builds Python and Flask backend APIs for a healthcare data platform; deploys on AWS EC2 and S3.",
+                    "Completed an internal workshop on AWS SageMaker; no production ML deployments yet.",
+                    "Uses basic CI/CD with GitHub Actions for automated testing and deployments.",
+                ],
+            },
+            {
+                "title": "IT Support Intern",
+                "company": "NYC Department of Education",
+                "location": "New York, NY",
+                "dates": "Summer 2022",
+                "bullets": [
+                    "Provided technical support and assisted with basic network administration tasks.",
+                ],
+            },
+        ],
+        "education": "B.S. Information Technology, CUNY Queens College, May 2023",
+        "skills": (
+            "Python, Flask, REST APIs, basic AWS (EC2, S3), GitHub Actions, SQL, "
+            "HTML/CSS, no MLOps, no LLM, no DevOps experience"
+        ),
+    },
     # ── TIER 3 — Underqualified, wrong skill set, or job hoppers ─────────
     {
         "name": "Emma Park",
@@ -584,6 +667,7 @@ def main() -> None:
     print(f"\nDone! {len(CANDIDATES)} candidates generated.")
     print("  Tier 1 (NY + LLMOps): Marcus Chen, Priya Sharma, Jordan Williams")
     print("  Tier 2 (partial fit): Alex Torres, Kevin Nguyen, Sarah Mitchell")
+    print("  Recent grads (Tier B, should rank bottom): Daniel Reyes, Natalie Russo")
     print("  Tier 3 (underqualified): Emma Park, Tyler Brooks, Aisha Williams, Chris Johnson")
 
 
