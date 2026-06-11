@@ -6,3 +6,4 @@ outputs/
 sample_resumes/
 *.zip
 *.xlsx
+.claude/settings.local.json
