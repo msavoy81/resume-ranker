@@ -278,7 +278,6 @@ def score_candidate(
             response = client.messages.create(
                 model=MODEL,
                 max_tokens=500,
-                temperature=0,
                 system=[{
                     "type": "text",
                     "text": system_prompt,
