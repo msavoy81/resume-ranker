@@ -14,7 +14,9 @@ import threading
 import uuid
 import zipfile
 from pathlib import Path
+from urllib.parse import quote_plus
 
+import pandas as pd
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
 BASE_DIR = Path(__file__).parent
@@ -338,7 +340,77 @@ def mark_all_read():
     return jsonify({"ok": True})
 
 
+def _job_title_from_jd(jd_path: Path) -> str:
+    try:
+        for line in jd_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if line:
+                return line
+    except OSError:
+        pass
+    return "Open Role"
+
+
+@app.route("/sample-results")
+def sample_results():
+    xlsx_path = BASE_DIR / "sample_ranked.xlsx"
+    jd_path   = BASE_DIR / "job.txt"
+    job_title = _job_title_from_jd(jd_path)
+
+    if not xlsx_path.exists():
+        return render_template("sample_results.html", rows=None, job_title=job_title)
+
+    df = pd.read_excel(xlsx_path)
+    df = df.where(pd.notna(df), None)
+
+    rows = []
+    for record in df.to_dict(orient="records"):
+        name = str(record.get("Candidate Name") or "")
+        tier_raw = record.get("Stability Tier")
+        try:
+            tier = int(tier_raw) if tier_raw is not None else None
+        except (ValueError, TypeError):
+            tier = None
+        fit_raw = record.get("JD Fit Composite")
+        try:
+            fit = round(float(fit_raw), 1) if fit_raw is not None else None
+        except (ValueError, TypeError):
+            fit = None
+        rows.append({
+            "rank":         record.get("Rank"),
+            "name":         name,
+            "name_encoded": quote_plus(name),
+            "tier":         tier,
+            "fit":          fit,
+            "local":        str(record.get("Local") or "No"),
+            "job_hopper":   bool(str(record.get("Job Hopper") or "").strip()),
+            "summary":      str(record.get("Summary") or ""),
+        })
+
+    return render_template("sample_results.html", rows=rows)
+
+
+@app.route("/sample-resume")
+def sample_resume():
+    name = request.args.get("name", "").strip()
+    if not name:
+        return jsonify({"error": "name parameter required"}), 400
+
+    resumes_dir = BASE_DIR / "sample_resumes"
+    if not resumes_dir.exists():
+        return jsonify({"error": "sample_resumes directory not found"}), 404
+
+    from scoring import find_resume_file
+    exts = (".pdf", ".docx", ".doc", ".txt")
+    resume_files = [f for f in resumes_dir.iterdir() if f.suffix.lower() in exts]
+    matched = find_resume_file(name, resume_files)
+    if matched is None:
+        return jsonify({"error": f"No resume found for '{name}'"}), 404
+
+    return send_file(str(matched), mimetype="application/pdf")
+
+
 if __name__ == "__main__":
     print("Resume Ranker — Web UI")
     print("Open http://localhost:5001 in your browser\n")
-    app.run(debug=False, port=5001)
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5001)))
