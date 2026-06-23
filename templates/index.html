@@ -1021,8 +1021,7 @@ function showSummaryBar() {
 form.addEventListener("submit", async e => {
   e.preventDefault();
   errorBanner.style.display = "none";
-  if (!document.getElementById("file-csv").files.length)     { showError("Please select a CSV file."); return; }
-  if (!document.getElementById("file-resumes").files.length) { showError("Please select at least one resume file."); return; }
+if (!document.getElementById("file-resumes").files.length) { showError("Please select at least one resume file."); return; }
   const jdFileOk = document.getElementById("file-jd").files.length > 0;
   const jdTextOk = (form.querySelector("textarea[name='jd_text']")||{value:""}).value.trim().length > 0;
   if (!jdFileOk && !jdTextOk) { showError("Please upload a job description or paste the text."); return; }
