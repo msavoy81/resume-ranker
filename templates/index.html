@@ -676,12 +676,12 @@
         </div>
 
         <div class="upload-group">
-          <label class="upload-label">Resume Files (ZIP)</label>
-          <span class="upload-hint">Zip your folder of PDF / DOCX resumes and upload here</span>
+          <label class="upload-label">Resume Files</label>
+          <span class="upload-hint">Upload PDF or DOCX resume files (select multiple)</span>
           <div class="drop-zone" id="dz-resumes">
-            <input type="file" name="resumes" id="file-resumes" accept=".zip" />
+            <input type="file" name="resumes" id="file-resumes" accept=".pdf,.docx" multiple />
             <div class="drop-icon">📁</div>
-            <div class="drop-text">Click or drag &amp; drop a .zip file</div>
+            <div class="drop-text">Click or drag &amp; drop PDF / DOCX files</div>
             <div class="drop-name" id="name-resumes"></div>
           </div>
         </div>
@@ -849,8 +849,31 @@ function wireDropZone(dzId, inputId, nameId) {
     }
   });
 }
+function wireMultiDropZone(dzId, inputId, nameId) {
+  const dz = document.getElementById(dzId);
+  const input = document.getElementById(inputId);
+  const nameEl = document.getElementById(nameId);
+  const update = () => {
+    const count = input.files.length;
+    if (count > 0) {
+      nameEl.textContent = count === 1 ? input.files[0].name : `${count} files selected`;
+      dz.classList.add("has-file");
+    }
+  };
+  input.addEventListener("change", update);
+  dz.addEventListener("dragover",  e => { e.preventDefault(); dz.classList.add("over"); });
+  dz.addEventListener("dragleave", ()  => dz.classList.remove("over"));
+  dz.addEventListener("drop", e => {
+    e.preventDefault(); dz.classList.remove("over");
+    if (e.dataTransfer.files.length) {
+      const dt = new DataTransfer();
+      Array.from(e.dataTransfer.files).forEach(f => dt.items.add(f));
+      input.files = dt.files; update();
+    }
+  });
+}
 wireDropZone("dz-csv",     "file-csv",     "name-csv");
-wireDropZone("dz-resumes", "file-resumes", "name-resumes");
+wireMultiDropZone("dz-resumes", "file-resumes", "name-resumes");
 wireDropZone("dz-jd",      "file-jd",      "name-jd");
 
 // JD tabs
@@ -999,7 +1022,7 @@ form.addEventListener("submit", async e => {
   e.preventDefault();
   errorBanner.style.display = "none";
   if (!document.getElementById("file-csv").files.length)     { showError("Please select a CSV file."); return; }
-  if (!document.getElementById("file-resumes").files.length) { showError("Please select a resumes ZIP file."); return; }
+  if (!document.getElementById("file-resumes").files.length) { showError("Please select at least one resume file."); return; }
   const jdFileOk = document.getElementById("file-jd").files.length > 0;
   const jdTextOk = (form.querySelector("textarea[name='jd_text']")||{value:""}).value.trim().length > 0;
   if (!jdFileOk && !jdTextOk) { showError("Please upload a job description or paste the text."); return; }

@@ -12,7 +12,6 @@ import subprocess
 import sys
 import threading
 import uuid
-import zipfile
 from pathlib import Path
 from urllib.parse import quote_plus
 
@@ -201,14 +200,14 @@ def run():
         return jsonify({"error": "Anthropic API key is required."}), 400
 
     csv_file = request.files.get("csv")
-    resumes_zip = request.files.get("resumes")
+    resume_files = request.files.getlist("resumes")
     jd_file = request.files.get("jd")
     jd_text = request.form.get("jd_text", "").strip()
 
     if not csv_file or not csv_file.filename:
         return jsonify({"error": "Greenhouse CSV file is required."}), 400
-    if not resumes_zip or not resumes_zip.filename:
-        return jsonify({"error": "Resumes ZIP file is required."}), 400
+    if not resume_files or not any(f.filename for f in resume_files):
+        return jsonify({"error": "Resume files are required."}), 400
     if not jd_file and not jd_text:
         return jsonify({"error": "Job description (file or text) is required."}), 400
 
@@ -220,22 +219,15 @@ def run():
     csv_path = job_dir / "candidates.csv"
     csv_file.save(str(csv_path))
 
-    # Save and unzip resumes
+    # Save uploaded resume files directly
     resumes_dir = job_dir / "resumes"
     resumes_dir.mkdir()
-    zip_path = job_dir / "resumes.zip"
-    resumes_zip.save(str(zip_path))
-    try:
-        with zipfile.ZipFile(zip_path) as zf:
-            for member in zf.namelist():
-                fname = Path(member).name
-                if not fname or fname.startswith("."):
-                    continue
-                ext = Path(fname).suffix.lower()
-                if ext in (".pdf", ".docx", ".doc", ".txt"):
-                    (resumes_dir / fname).write_bytes(zf.read(member))
-    except zipfile.BadZipFile:
-        return jsonify({"error": "The resumes file is not a valid ZIP archive."}), 400
+    for f in resume_files:
+        fname = Path(f.filename).name
+        if not fname or fname.startswith("."):
+            continue
+        if Path(fname).suffix.lower() in (".pdf", ".docx", ".doc", ".txt"):
+            f.save(str(resumes_dir / fname))
 
     # Save JD
     jd_path = job_dir / "job.txt"
