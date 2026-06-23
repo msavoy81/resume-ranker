@@ -204,8 +204,6 @@ def run():
     jd_file = request.files.get("jd")
     jd_text = request.form.get("jd_text", "").strip()
 
-    if not csv_file or not csv_file.filename:
-        return jsonify({"error": "Greenhouse CSV file is required."}), 400
     if not resume_files or not any(f.filename for f in resume_files):
         return jsonify({"error": "Resume files are required."}), 400
     if not jd_file and not jd_text:
@@ -217,7 +215,8 @@ def run():
 
     # Save CSV
     csv_path = job_dir / "candidates.csv"
-    csv_file.save(str(csv_path))
+    if csv_file and csv_file.filename:
+        csv_file.save(str(csv_path))
 
     # Save uploaded resume files directly
     resumes_dir = job_dir / "resumes"
@@ -228,6 +227,13 @@ def run():
             continue
         if Path(fname).suffix.lower() in (".pdf", ".docx", ".doc", ".txt"):
             f.save(str(resumes_dir / fname))
+
+    if not (csv_file and csv_file.filename):
+        stems = sorted(
+            f.stem for f in resumes_dir.iterdir()
+            if f.suffix.lower() in (".pdf", ".docx", ".doc", ".txt")
+        )
+        csv_path.write_text("Candidate Name\n" + "\n".join(stems), encoding="utf-8")
 
     # Save JD
     jd_path = job_dir / "job.txt"

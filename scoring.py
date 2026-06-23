@@ -30,11 +30,12 @@ from docx import Document
 # Config — change these here, no logic edits needed elsewhere
 # ---------------------------------------------------------------------------
 
-MODEL            = "claude-opus-4-8"   # swap model version here only
-MAX_RESUME_CHARS = 14_000
-MAX_RETRIES      = 3
-RETRY_BASE_DELAY = 2.0                 # seconds; doubles on each retry
-ERROR_KEY        = "_error"            # sentinel key for failed Claude responses
+MODEL               = "claude-opus-4-8"   # swap model version here only
+MAX_RESUME_CHARS    = 14_000
+MAX_RETRIES         = 3
+RETRY_BASE_DELAY    = 2.0                 # seconds; doubles on each retry
+ERROR_KEY           = "_error"            # sentinel key for failed Claude responses
+LOCALITY_THRESHOLD  = 2.0                 # fit-composite gap needed for non-local to outrank local within same tier
 
 
 # ---------------------------------------------------------------------------
@@ -149,7 +150,7 @@ def find_resume_file(candidate_name: str, resume_files: list, warn_fn=None) -> "
 # ---------------------------------------------------------------------------
 
 _SYSTEM_TEMPLATE = """\
-You are an expert technical recruiter's assistant evaluating resumes for a \
+You are an expert technical recruiter's assistant evaluating resumes for a
 senior-level AI/ML infrastructure role (LLMOps Engineer or similar).
 
 The ideal candidate has TWO layers of experience:
@@ -164,73 +165,119 @@ The ideal candidate has TWO layers of experience:
     agentic workflows, generative AI infrastructure, LLM deployment and
     operations, RAG pipelines, model inference at scale, AI observability,
     prompt engineering, foundation model integration (Bedrock, GPT, Llama,
-    Gemini, etc.). Again — evidence in job bullets, not skills lists.
+    Gemini, etc.). Evidence must appear in job bullets, not skills lists.
 
 Analyze the resume and return ONLY a JSON object. No explanation, no markdown.
 
-━━━ SIGNAL 1: Stability Tier ━━━
-Based on the candidate's MOST RECENT role (latest end date, or 'Present'):
-  Tier A — most recent role lasted 3+ years
-  Tier B — most recent role lasted less than 3 years
+━━━ SIGNAL 0: Candidate Name ━━━
+Extract the candidate's full name from the resume header or contact section
+(typically the very first line or the largest text at the top of the page).
+Return it properly capitalized. If the name cannot be determined, return "".
+
+━━━ SIGNAL 1: Stability & Degree Check ━━━
+All thresholds calculate dynamically from today's date ({today}).
+Three years ago = {three_years_ago}.
+
+─── Tenure Check ───
+Based on the candidate's MOST RECENT role only (latest end date or 'Present'):
+  Pass — most recent role started on or before {three_years_ago}
+  Fail — most recent role started after {three_years_ago}
 
 Rules:
   • Full-time, non-internship roles only
-  • If currently employed (no end date or says 'Present'), count from start
-    date to today ({today})
-  • Internships, co-ops, and pure contract/temp stints do NOT count
+  • Currently employed (no end date or 'Present') = count from start to today
+  • Internships, co-ops, and contract/temp stints do NOT count
 
-━━━ SIGNAL 2: Job Hopper Flag ━━━
-Flag true if the career history shows a pattern of instability — multiple
-stints under 18 months with no clear context (layoffs, closures, or explicit
-contract roles are acceptable explanations). A strong recent role reduces but
-does not erase an extreme earlier pattern.
+─── Degree Check ───
+Any bachelor's or master's degree listed must have a graduation date
+older than {three_years_ago} to pass.
+  Pass — graduation date is before {three_years_ago}, or no degree listed
+  Fail — graduation date is on or after {three_years_ago}
+
+If a master's degree (including MBA) is listed without a graduation date,
+use the bachelor's degree graduation date for this check instead.
+If neither degree has a graduation date, treat as Pass.
+
+─── Tier Assignment ───
+  Tier 1 — Passes both tenure AND degree check
+  Tier 2 — Fails tenure only; degree is fine or not listed.
+            Slight score reduction but strong JD fit can compensate.
+  Tier 3 — Fails degree check regardless of tenure.
+            HARD FLOOR: automatically ranks below all Tier 1 and Tier 2
+            candidates no matter how strong the resume.
+  Tier 4 — Fails both tenure AND degree check.
+            Ranks below Tier 3. Absolute bottom of the list.
+            Flagged for potential future elimination pending team approval.
+
+━━━ SIGNAL 2: Locality ━━━
+Detect any reference to NY, New York, NYC, Brooklyn, Queens, Manhattan,
+Bronx, Staten Island, Long Island, New Jersey, or CT in the resume.
+  local: true — NY metro reference detected
+  local: false — no reference found
+Also extract the candidate's stated city/state (e.g. "Brooklyn, NY" or
+"Austin, TX"). Return an empty string if no location is found.
 
 ━━━ SIGNAL 3: Layer 1 Score (Infrastructure Foundation) ━━━
-0–10 based on depth and consistency of evidence in job bullets:
+Score 0–10 based on depth and consistency of evidence in job bullets:
   0  = no infrastructure experience evident
   4  = some exposure, mostly surface-level or skills-list only
   7  = solid hands-on infrastructure background across roles
   10 = deep, consistent infrastructure engineering, clearly a core strength
 
 ━━━ SIGNAL 4: Layer 2 Score (AI/ML Application) ━━━
-0–10 based on whether the candidate has applied infrastructure skills to
-real AI/ML systems. Skills-list mentions score low; job bullet evidence scores high.
-  0  = no AI/ML application evidence
-  4  = peripheral or conceptual exposure only
-  7  = clear evidence of building or operating AI/ML systems
-  10 = deep, consistent AI/ML systems work, a defining part of their career
+Score 0–10 based on whether the candidate has applied infrastructure
+skills to real AI/ML systems. Skills-list mentions score low;
+job bullet evidence scores high.
+  0  = no AI/ML application experience evident
+  4  = some exposure, mostly buzzwords or skills-list only
+  7  = clear evidence of applying infrastructure to AI/ML systems
+  10 = deep, consistent AI/ML application work, clearly a core strength
 
-━━━ SIGNAL 5: Estimated Experience ━━━
-Estimate total years of relevant full-time professional experience
-(exclude internships and education time).
+━━━ SIGNAL 5: Job Hopper Flag ━━━
+Flag true if career history shows a pattern of instability — multiple
+stints under 18 months with no clear context (layoffs, closures, or
+explicit contract roles are acceptable explanations).
+A strong recent role reduces but does not erase an extreme earlier pattern.
 
-━━━ SIGNAL 6: NY Metro Signal ━━━
-Report true if ANY of the following:
-  • Current/listed address in NYC, Long Island, northern NJ, or Fairfield County CT
-  • Any employer based in NY metro
-  • Any university in NY metro
+━━━ RANKING WEIGHTS ━━━
+Within each tier, candidates rank by composite score in this priority order:
+  1. Tier assignment (1 is highest, 4 is lowest — hard boundaries)
+  2. Locality (local candidates rank above non-local within the same tier)
+  3. JD fit composite (Layer 1 at 40%, Layer 2 at 60%, bonus if both >= 5)
 
-Return EXACTLY this JSON (no extra fields):
+Non-local candidates may rank above local candidates within the same tier
+only if their JD fit composite is significantly higher.
+Locality threshold gap: {locality_threshold} [TUNABLE — calibrate after
+validation run against recruiter eye test]
+
+Return this JSON structure exactly:
 {{
-  "stability_tier":             "A" | "B",
-  "stability_rationale":        "<one concise sentence>",
-  "most_recent_role_years":     <float or null>,
-  "job_hopper_flag":            true | false,
-  "job_hopper_rationale":       "<one concise sentence>",
-  "layer1_score":               <int 0–10>,
-  "layer1_rationale":           "<one concise sentence>",
-  "layer2_score":               <int 0–10>,
-  "layer2_rationale":           "<one concise sentence>",
-  "estimated_experience_years": <float or null>,
-  "ny_signal":                  true | false,
-  "ny_rationale":               "<one concise sentence>",
-  "detected_location":          "<city/region or 'Unknown'>"
+  "candidate_name": "Full name from resume header, or empty string",
+  "stability_tier": 1 | 2 | 3 | 4,
+  "tenure_pass": true | false,
+  "degree_pass": true | false,
+  "local": true | false,
+  "detected_location": "City, State or empty string",
+  "layer1_score": 0-10,
+  "layer2_score": 0-10,
+  "fit_composite": 0-10,
+  "job_hopper": true | false,
+  "summary": "2-3 sentence plain English explanation of why this candidate ranked where they did"
 }}"""
 
 
 def _build_system_prompt() -> str:
     """Inject runtime values into the prompt template."""
-    return _SYSTEM_TEMPLATE.format(today=datetime.now().strftime("%Y-%m-%d"))
+    today = datetime.now()
+    try:
+        three_years_ago = today.replace(year=today.year - 3)
+    except ValueError:
+        three_years_ago = today.replace(year=today.year - 3, day=28)
+    return _SYSTEM_TEMPLATE.format(
+        today=today.strftime("%Y-%m-%d"),
+        three_years_ago=three_years_ago.strftime("%Y-%m-%d"),
+        locality_threshold=LOCALITY_THRESHOLD,
+    )
 
 
 def _parse_json(text: str) -> dict:
@@ -238,11 +285,33 @@ def _parse_json(text: str) -> dict:
     if text.startswith("```"):
         lines = text.splitlines()
         text  = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
+
+    # Extract the first complete {...} object so trailing text doesn't break parsing.
+    start = text.find("{")
+    if start != -1:
+        depth, in_str, escape = 0, False, False
+        for i, ch in enumerate(text[start:], start):
+            if escape:
+                escape = False
+            elif ch == "\\" and in_str:
+                escape = True
+            elif ch == '"':
+                in_str = not in_str
+            elif not in_str:
+                if ch == "{":
+                    depth += 1
+                elif ch == "}":
+                    depth -= 1
+                    if depth == 0:
+                        text = text[start:i + 1]
+                        break
+
     return json.loads(text)
 
 
 def _error_result(reason: str) -> dict:
     return {
+        "candidate_name":             "",
         "stability_tier":             None,
         "stability_rationale":        reason,
         "most_recent_role_years":     None,
@@ -363,57 +432,55 @@ def process_candidate(
             l1 = result.get("layer1_score", 0)
             l2 = result.get("layer2_score", 0)
             fit_composite = compute_fit_composite(l1, l2)
-            hopper_tag = " 🚩" if result.get("job_hopper_flag") else ""
+            hopper_tag = " 🚩" if result.get("job_hopper") else ""
             status = (
                 f"✓  tier={result['stability_tier']}  "
-                f"ny={'Y' if result['ny_signal'] else 'N'}  "
+                f"local={'Y' if result.get('local') else 'N'}  "
                 f"L1={l1} L2={l2} fit={fit_composite}{hopper_tag}"
             )
 
     with _print_lock:
         print(f"[{idx:>3}/{total}] {name} … {status}", flush=True)
 
-    tier = result.get("stability_tier")
-    l1   = result.get("layer1_score", 0) or 0
-    l2   = result.get("layer2_score", 0) or 0
-    ok   = resume_found and ERROR_KEY not in result
+    tier  = result.get("stability_tier")
+    l1    = result.get("layer1_score", 0) or 0
+    l2    = result.get("layer2_score", 0) or 0
+    local = result.get("local", False)
+    ok    = resume_found and ERROR_KEY not in result
 
     return {
         # Internal sort keys — not displayed
-        "_stability_tier":  tier,
-        "_fit_composite":   fit_composite,
-        "_job_hopper_flag": result.get("job_hopper_flag", False),
+        "_stability_tier": tier,
+        "_fit_composite":  fit_composite,
+        "_local":          local,
 
         # Display columns
-        "Candidate Name":          name,
-        "Stability Tier":          tier or "",
-        "Job Hopper":              "⚠ Review" if result.get("job_hopper_flag") else "",
-        "JD Fit Composite":        fit_composite,
-        "Layer 1 (Foundation)":    l1 if ok else None,
-        "Layer 2 (AI/ML)":         l2 if ok else None,
-        "Keywords Detected":       ", ".join(keywords),
-        "Est. Experience (yrs)":   result.get("estimated_experience_years"),
-        "Stability Rationale":     result.get("stability_rationale", ""),
-        "Job Hopper Rationale":    result.get("job_hopper_rationale", ""),
-        "Layer 1 Rationale":       result.get("layer1_rationale", ""),
-        "Layer 2 Rationale":       result.get("layer2_rationale", ""),
-        "NY Signal":               "Yes" if result.get("ny_signal") else "No",
-        "NY Rationale":            result.get("ny_rationale", ""),
-        "Detected Location":       result.get("detected_location", ""),
-        "Most Recent Role (yrs)":  result.get("most_recent_role_years"),
-        "Resume Found":            "Yes" if resume_found else "No",
+        "Candidate Name":       result.get("candidate_name") or name,
+        "Stability Tier":       tier or "",
+        "Tenure Pass":          ("Yes" if result.get("tenure_pass") else "No") if ok else "",
+        "Degree Pass":          ("Yes" if result.get("degree_pass") else "No") if ok else "",
+        "Local":                "Yes" if local else "No",
+        "Job Hopper":           "⚠ Review" if result.get("job_hopper") else "",
+        "JD Fit Composite":     fit_composite,
+        "Layer 1 (Foundation)": l1 if ok else None,
+        "Layer 2 (AI/ML)":      l2 if ok else None,
+        "Keywords Detected":    ", ".join(keywords),
+        "Summary":              result.get("summary", ""),
+        "Resume Found":         "Yes" if resume_found else "No",
+        "Resume Link":          resume_file.name if resume_file else "",
         **gh_row,
     }
 
 
 # ---------------------------------------------------------------------------
-# Sort key: Tier A > B → fit composite DESC → job hoppers last within tier
+# Sort key: tier ASC → locality-adjusted fit composite DESC
 # ---------------------------------------------------------------------------
 
 def sort_key(row: dict) -> tuple:
-    tier_order = {"A": 0, "B": 1, None: 2, "": 2}
+    tier     = row.get("_stability_tier") or 99
+    fit      = row.get("_fit_composite") or 0
+    adjusted = fit if row.get("_local") else fit - LOCALITY_THRESHOLD
     return (
-        tier_order.get(row.get("_stability_tier"), 2),
-        -(row.get("_fit_composite") or 0),
-        1 if row.get("_job_hopper_flag") else 0,
+        tier,
+        -adjusted,
     )

@@ -56,6 +56,7 @@ from scoring import (
 DARK_BLUE  = "1F3864"
 WHITE      = "FFFFFF"
 GREEN      = "C6EFCE"
+LIGHT_BLUE = "BDD7EE"
 YELLOW     = "FFEB9C"
 RED        = "FFC7CE"
 LIGHT_GREY = "F2F2F2"
@@ -70,21 +71,17 @@ COLUMN_WIDTHS = {
     "Stage":                  22,
     "Greenhouse Location":    22,
     "Stability Tier":         14,
+    "Tenure Pass":            12,
+    "Degree Pass":            12,
+    "Local":                  10,
     "Job Hopper":             12,
     "JD Fit Composite":       14,
     "Layer 1 (Foundation)":   20,
     "Layer 2 (AI/ML)":        16,
     "Keywords Detected":      34,
-    "Est. Experience (yrs)":  18,
-    "Stability Rationale":    42,
-    "Job Hopper Rationale":   36,
-    "Layer 1 Rationale":      42,
-    "Layer 2 Rationale":      42,
-    "NY Signal":              10,
-    "NY Rationale":           36,
-    "Detected Location":      22,
-    "Most Recent Role (yrs)": 18,
+    "Summary":                50,
     "Resume Found":           12,
+    "Resume Link":            34,
 }
 
 FIT_SCORE_COLS = {
@@ -95,18 +92,19 @@ FIT_SCORE_COLS = {
 
 PREFERRED_COLUMNS = [
     "Rank", "Candidate Name", "Email", "Applied At", "Stage",
-    "Greenhouse Location", "Stability Tier", "Job Hopper",
-    "JD Fit Composite", "Layer 1 (Foundation)", "Layer 2 (AI/ML)",
-    "Keywords Detected", "Est. Experience (yrs)",
-    "Stability Rationale", "Job Hopper Rationale",
-    "Layer 1 Rationale", "Layer 2 Rationale",
-    "NY Signal", "NY Rationale", "Detected Location",
-    "Most Recent Role (yrs)", "Resume Found",
+    "Greenhouse Location", "Stability Tier", "Tenure Pass", "Degree Pass",
+    "Local", "Job Hopper", "JD Fit Composite",
+    "Layer 1 (Foundation)", "Layer 2 (AI/ML)",
+    "Keywords Detected", "Summary", "Resume Found", "Resume Link",
 ]
 
 
-def _stability_fill(tier: str) -> PatternFill:
-    color = {"A": GREEN, "B": YELLOW}.get(tier)
+def _stability_fill(tier) -> PatternFill:
+    try:
+        t = int(tier)
+    except (TypeError, ValueError):
+        return PatternFill()
+    color = {1: GREEN, 2: LIGHT_BLUE, 3: YELLOW, 4: RED}.get(t)
     return (PatternFill(start_color=color, end_color=color, fill_type="solid")
             if color else PatternFill())
 
@@ -147,11 +145,11 @@ def write_excel(df: pd.DataFrame, output_path: Path) -> None:
                 cell.fill = PatternFill(start_color=FLAG_FILL, end_color=FLAG_FILL, fill_type="solid")
                 cell.font = Font(bold=True, color=FLAG_RED, size=10)
                 cell.alignment = Alignment(horizontal="center", vertical="top", wrap_text=True)
-            elif col_name == "Stability Tier" and value:
-                cell.fill = _stability_fill(str(value))
+            elif col_name == "Stability Tier" and value != "" and value is not None:
+                cell.fill = _stability_fill(value)
                 cell.font = Font(bold=True, size=12)
                 cell.alignment = Alignment(horizontal="center", vertical="top")
-            elif col_name == "NY Signal":
+            elif col_name == "Local":
                 color = GREEN if value == "Yes" else LIGHT_GREY
                 cell.fill = PatternFill(start_color=color, end_color=color, fill_type="solid")
                 cell.alignment = Alignment(horizontal="center", vertical="top")
@@ -284,17 +282,18 @@ def main() -> None:
                 with _print_lock:
                     print(f"[ERROR] {name}: {exc}", flush=True)
                 results[slot] = {
-                    "_stability_tier": None, "_fit_composite": None, "_job_hopper_flag": False,
-                    "Candidate Name": name, "Stability Tier": "", "Job Hopper": "",
-                    "NY Signal": "No", "JD Fit Composite": None, "Resume Found": "No",
-                    "Stability Rationale": str(exc),
+                    "_stability_tier": None, "_fit_composite": None, "_local": False,
+                    "Candidate Name": name, "Stability Tier": "", "Tenure Pass": "",
+                    "Degree Pass": "", "Local": "No", "Job Hopper": "",
+                    "JD Fit Composite": None, "Resume Found": "No", "Resume Link": "",
+                    "Summary": str(exc),
                 }
 
     results.sort(key=sort_key)  # type: ignore[arg-type]
 
     out_df = pd.DataFrame(results)
     out_df.insert(0, "Rank", range(1, len(out_df) + 1))
-    out_df = out_df.drop(columns=["_stability_tier", "_fit_composite", "_job_hopper_flag"], errors="ignore")
+    out_df = out_df.drop(columns=["_stability_tier", "_fit_composite", "_local"], errors="ignore")
 
     ordered = [c for c in PREFERRED_COLUMNS if c in out_df.columns]
     extras  = [c for c in out_df.columns if c not in ordered]
